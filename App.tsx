@@ -191,6 +191,11 @@ function PresentationSwitch({
 function Dashboard() {
   const { user, signOut, presentation, setPresentation } = useAppContext();
   const isWeb = presentation === "web";
+  const today = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "2-digit",
+  }).format(new Date()).toUpperCase();
 
   return (
     <SafeAreaView className="flex-1 bg-canvas">
@@ -217,7 +222,7 @@ function Dashboard() {
           <ScrollView contentContainerClassName="mx-auto w-full max-w-[1120px] px-5 pb-28 pt-8 md:px-9 md:pt-10">
             <View className="mb-8 flex-row items-end justify-between gap-4">
               <View>
-                <Text className="font-body text-sm text-muted">FRIDAY, NOVEMBER 06</Text>
+                <Text className="font-body text-sm text-muted">{today}</Text>
                 <Text className="mt-2 font-display text-[34px] leading-10 text-ink">
                   Good to have you, {user?.name}.
                 </Text>
