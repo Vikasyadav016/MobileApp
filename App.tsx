@@ -37,7 +37,10 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+} from "react-native-safe-area-context";
 import { AppPresentation, AppProvider, useAppContext } from "./src/context/AppContext";
 
 const projects = [
@@ -57,10 +60,12 @@ function AppRoot() {
   if (!fontsLoaded) return <View className="flex-1 bg-canvas" />;
 
   return (
-    <AppProvider>
-      <StatusBar style="light" />
-      <AppGate />
-    </AppProvider>
+    <SafeAreaProvider>
+      <AppProvider>
+        <StatusBar style="light" />
+        <AppGate />
+      </AppProvider>
+    </SafeAreaProvider>
   );
 }
 
