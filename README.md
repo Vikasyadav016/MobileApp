@@ -14,6 +14,10 @@ Use the Expo terminal shortcuts to open Android, iOS, or web. For web only, run 
 ## App structure
 
 - `src/context/AppContext.tsx` provides the signed-in user, persisted session actions, and the app/web presentation switcher through `useAppContext()`.
+- `app/` contains Expo Router routes. The root route redirects to `/sign-in` or `/dashboard` according to the persisted session.
+- `src/components/` contains the sign-in and dashboard screens plus reusable dashboard, navigation, and top-bar components.
+- `src/common/global/` contains the shared back button, notice/toast provider, and loader. Call `showNotice({ type, message, mode, position })` from `useFeedback()` for global feedback.
+- `src/i18n/locales/en.json` and `hi.json` contain the English and Hindi message dictionaries. Use `useTranslation()` and switch the language from the shared top bar.
 - `src/constants/` contains the color, font-family, and text-size tokens.
 - `App.tsx` contains the sign-in and NOVA dashboard screens.
 - `global.css`, `tailwind.config.js`, `babel.config.js`, and `metro.config.js` configure NativeWind.

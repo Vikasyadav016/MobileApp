@@ -2,7 +2,7 @@
   "name": "nova-mobile-web",
   "version": "1.0.0",
   "private": true,
-  "main": "node_modules/expo/AppEntry.js",
+  "main": "App.tsx",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -15,6 +15,7 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "^58.0.23",
     "expo-font": "^58.0.11",
+    "expo-router": "~58.0.30",
     "expo-status-bar": "^58.0.4",
     "lucide-react-native": "^0.577.0",
     "nativewind": "^4.2.1",
