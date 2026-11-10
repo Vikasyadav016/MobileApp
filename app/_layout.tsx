@@ -36,7 +36,7 @@ export default function RootLayout() {
       <AppProvider>
         <LocaleProvider>
           <FeedbackProvider>
-            <StatusBar style="light" />
+            <StatusBar style="dark" />
             <Stack screenOptions={{ headerShown: false, animation: "fade" }} />
           </FeedbackProvider>
         </LocaleProvider>

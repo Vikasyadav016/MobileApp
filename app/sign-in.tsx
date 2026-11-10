@@ -18,4 +18,3 @@ export default function SignInRoute() {
 	if (user) return <Redirect href="/dashboard" />;
 	return <SignInScreen />;
 }
-export { default } from "../src/components/SignIn";

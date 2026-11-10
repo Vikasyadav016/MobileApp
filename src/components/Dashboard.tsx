@@ -1,43 +1,103 @@
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Compass,
-  Cpu,
-  Plus,
-  Radio,
-  Sparkles,
-  Workflow,
-} from "lucide-react-native";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Search } from "lucide-react-native";
+import { useState } from "react";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAppContext } from "../context/AppContext";
-import { useTranslation } from "../i18n/LocaleContext";
+import { useFeedback } from "../common/global/FeedbackProvider";
+import { AddableModule, CampusModule } from "../constants/campus";
+import { UserRole, useAppContext } from "../context/AppContext";
+import { TranslationKey, useTranslation } from "../i18n/LocaleContext";
 import BottomBar from "./BottomBar";
-import Metric from "./Metric";
-import ProjectRow from "./ProjectRow";
+import AddRecordScreen from "./AddRecordScreen";
+import OverviewPanel from "./OverviewPanel";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
+import WorkspacePanel, { CampusRecord } from "./WorkspacePanel";
 
-const projects = [
-  { name: "Helix interface", typeKey: "dashboard.designSystem" as const, progress: 82, color: "bg-acid" },
-  { name: "Orbit protocol", typeKey: "dashboard.research" as const, progress: 56, color: "bg-aqua" },
-  { name: "Signal studio", typeKey: "dashboard.experiment" as const, progress: 34, color: "bg-coral" },
-];
+type AttendanceState = "present" | "absent" | "late";
+
+const roleLabelKeys: Record<UserRole, TranslationKey> = {
+  admin: "roles.admin",
+  hod: "roles.hod",
+  faculty: "roles.faculty",
+  student: "roles.student",
+};
 
 export default function Dashboard() {
   const { user, signOut, presentation, setPresentation } = useAppContext();
   const { language, t } = useTranslation();
+  const { showNotice } = useFeedback();
+  const role = user?.role ?? "admin";
+  const [activeModule, setActiveModule] = useState<CampusModule>("overview");
+  const [query, setQuery] = useState("");
+  const [attendanceStates, setAttendanceStates] = useState<Record<string, AttendanceState>>({});
+  const [createdRecords, setCreatedRecords] = useState<Partial<Record<AddableModule, CampusRecord[]>>>({});
+  const [addModule, setAddModule] = useState<AddableModule | null>(null);
   const isWeb = presentation === "web";
-  const today = new Intl.DateTimeFormat(language === "hi" ? "hi-IN" : "en-US", {
+
+  const formattedDate = new Intl.DateTimeFormat(language === "hi" ? "hi-IN" : "en-IN", {
     weekday: "long",
+    day: "numeric",
     month: "long",
-    day: "2-digit",
-  }).format(new Date()).toUpperCase();
+  }).format(new Date());
+
+  function navigateTo(module: CampusModule) {
+    setActiveModule(module);
+    setQuery("");
+  }
+
+  function handleAction(action: TranslationKey) {
+    showNotice({
+      type: action === "campus.export" ? "success" : "warning",
+      message: action === "campus.export" ? t("campus.exportReady") : t("campus.actionComing"),
+      position: "right-top",
+    });
+  }
+
+  function toggleAttendance(id: string) {
+    setAttendanceStates((current) => {
+      const currentStatus = current[id] ?? (id === "a-3" ? "absent" : id === "a-4" ? "late" : "present");
+      return { ...current, [id]: currentStatus === "present" ? "absent" : "present" };
+    });
+    showNotice({ type: "success", message: t("campus.attendanceSaved"), position: "center-top" });
+  }
+
+  function saveRecord(module: AddableModule, values: Record<string, string>) {
+    const record: CampusRecord = {
+      id: `new-${Date.now()}`,
+      name: values.name.trim(),
+      secondary: module === "students"
+        ? `${values.id.trim()} · ${values.group.trim()}`
+        : module === "faculty"
+          ? `${values.group.trim()} · ${values.id.trim()}`
+          : `${values.id.trim()} · ${values.group.trim()}`,
+      meta: module === "students" ? values.email.trim() || t("campus.active") : values.email.trim(),
+      status: module === "faculty" ? "campus.onDuty" : "campus.active",
+      tone: "green",
+    };
+
+    setCreatedRecords((current) => ({
+      ...current,
+      [module]: [...(current[module] ?? []), record],
+    }));
+    setAddModule(null);
+    showNotice({
+      type: "success",
+      message: t(module === "students" ? "form.studentRecordAdded" : module === "faculty" ? "form.facultyRecordAdded" : "form.subjectRecordAdded"),
+      position: "center-top",
+    });
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-canvas">
       <View className="flex-1 flex-row">
-        {isWeb && <Sidebar onSignOut={signOut} />}
+        {isWeb && (
+          <Sidebar
+            onSignOut={signOut}
+            role={role}
+            activeModule={activeModule}
+            onNavigate={navigateTo}
+          />
+        )}
         <View className="min-w-0 flex-1">
           <TopBar
             variant="authorized"
@@ -46,78 +106,69 @@ export default function Dashboard() {
             userName={user?.name}
             onSignOut={signOut}
           />
-          <ScrollView contentContainerClassName="mx-auto w-full max-w-[1120px] px-5 pb-28 pt-8 md:px-9 md:pt-10">
-            <View className="mb-8 flex-row items-end justify-between gap-4">
-              <View className="min-w-0 flex-1">
-                <Text className="font-body text-sm text-muted">{today}</Text>
-                <Text className="mt-2 font-display text-[34px] leading-10 text-ink">
+          <ScrollView className="min-h-0 flex-1" contentContainerClassName="mx-auto w-full max-w-[1320px] px-4 pb-6 pt-5 sm:px-5 md:px-9 md:pb-10 md:pt-9">
+            <View className="mb-6 flex-row flex-wrap items-end justify-between gap-5">
+              <View className="min-w-[220px] flex-1">
+                <Text className="font-body text-sm text-muted">{formattedDate} · {t("campus.term")}</Text>
+                <Text className="mt-2 font-display text-[32px] leading-9 text-ink">
                   {t("dashboard.greeting")} {user?.name}.
                 </Text>
-              </View>
-              <Pressable accessibilityRole="button" className="hidden h-10 flex-row items-center gap-2 rounded-lg bg-acid px-4 sm:flex">
-                <Plus size={16} color="#090B0E" />
-                <Text className="font-medium text-sm text-canvas">{t("dashboard.newProject")}</Text>
-              </Pressable>
-            </View>
-
-            <View className="flex-row flex-wrap gap-3">
-              <Metric icon={<Workflow size={16} color="#C6F36A" />} label={t("dashboard.inMotion")} value="08" detail={t("dashboard.workstreams")} />
-              <Metric icon={<Radio size={16} color="#70E0CE" />} label={t("dashboard.focusTime")} value="12.4h" detail={t("dashboard.focusWeek")} />
-              <Metric icon={<Sparkles size={16} color="#FF8D72" />} label={t("dashboard.ideasCaptured")} value="24" detail={t("dashboard.ideasReady")} />
-            </View>
-
-            <View className="mt-9 flex-row items-center justify-between">
-              <View>
-                <Text className="font-display text-xl text-ink">{t("dashboard.orbit")}</Text>
-                <Text className="mt-1 font-body text-sm text-muted">{t("dashboard.progressHint")}</Text>
-              </View>
-              <Pressable accessibilityRole="button" className="flex-row items-center gap-1 py-2">
-                <Text className="font-medium text-sm text-aqua">{t("dashboard.allProjects")}</Text>
-                <ArrowRight size={14} color="#70E0CE" />
-              </Pressable>
-            </View>
-
-            <View className="mt-4 gap-3">
-              {projects.map((project, index) => (
-                <ProjectRow key={project.name} name={project.name} type={t(project.typeKey)} progress={project.progress} color={project.color} index={index} />
-              ))}
-            </View>
-
-            <View className="mt-8 flex-row flex-wrap gap-3">
-              <View className="min-h-[170px] min-w-[250px] flex-1 rounded-xl border border-line bg-surface p-5">
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-2">
-                    <Compass size={16} color="#70E0CE" />
-                    <Text className="font-medium text-sm text-ink">{t("dashboard.nextRadar")}</Text>
-                  </View>
-                </View>
-                <View className="mt-5 flex-row items-center justify-between border-t border-line pt-4">
-                  <View>
-                    <Text className="font-medium text-base text-ink">{t("dashboard.prototypeReview")}</Text>
-                    <Text className="mt-1 font-body text-sm text-muted">{t("dashboard.todayTime")}</Text>
-                  </View>
-                  <View className="h-9 w-9 items-center justify-center rounded-full bg-raised">
-                    <ArrowUpRight size={16} color="#C6F36A" />
-                  </View>
+                <View className="mt-2 self-start rounded-full bg-acid/10 px-2.5 py-1">
+                  <Text className="font-medium text-xs text-acid">{t(roleLabelKeys[role])}</Text>
                 </View>
               </View>
-              <View className="min-h-[170px] min-w-[250px] flex-1 rounded-xl border border-line bg-surface p-5">
-                <View className="flex-row items-center gap-2">
-                  <Cpu size={16} color="#FF8D72" />
-                  <Text className="font-medium text-sm text-ink">{t("dashboard.studioSignal")}</Text>
-                </View>
-                <View className="mt-5 flex-row items-end gap-1.5">
-                  {[34, 50, 39, 68, 46, 83, 58, 72, 48, 92, 63, 76, 52, 88, 61, 100].map((height, index) => (
-                    <View key={index} style={{ height: `${height}%` }} className={`h-16 flex-1 rounded-sm ${index === 15 ? "bg-acid" : "bg-raised"}`} />
-                  ))}
-                </View>
-                <Text className="mt-2 font-body text-xs text-muted">{t("dashboard.creativeRhythm")}</Text>
+              <View className="h-11 min-w-[250px] flex-1 flex-row items-center rounded-lg border border-line bg-surface px-3 md:max-w-[350px]">
+                <Search size={16} color="#63717E" />
+                <TextInput
+                  accessibilityLabel={t("campus.search")}
+                  onChangeText={setQuery}
+                  placeholder={t("campus.search")}
+                  placeholderTextColor="#82909B"
+                  value={query}
+                  className="ml-2 flex-1 font-body text-sm text-ink outline-none"
+                />
+                {query.length > 0 && (
+                  <Pressable onPress={() => setQuery("")} accessibilityRole="button" className="px-2 py-1">
+                    <Text className="font-medium text-xs text-aqua">{t("campus.clear")}</Text>
+                  </Pressable>
+                )}
               </View>
             </View>
+
+            {activeModule === "overview" ? (
+              <OverviewPanel role={role} />
+            ) : (
+              <WorkspacePanel
+                module={activeModule}
+                role={role}
+                query={query}
+                attendanceStates={attendanceStates}
+                onToggleAttendance={toggleAttendance}
+                onAction={handleAction}
+                addedRecords={createdRecords[activeModule as AddableModule] ?? []}
+                onCreateRecord={(module) => setAddModule(module)}
+              />
+            )}
           </ScrollView>
-          {!isWeb && <BottomBar onSignOut={signOut} />}
+          {!isWeb && (
+            <BottomBar
+              onSignOut={signOut}
+              role={role}
+              activeModule={activeModule}
+              onNavigate={navigateTo}
+            />
+          )}
         </View>
       </View>
+      {addModule && (
+        <AddRecordScreen
+          key={addModule}
+          module={addModule}
+          visible
+          onCancel={() => setAddModule(null)}
+          onSubmit={(values) => saveRecord(addModule, values)}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -1,5 +1,5 @@
 import { Bell, ChevronDown, Command } from "lucide-react-native";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, useWindowDimensions, View } from "react-native";
 import { AppPresentation } from "../context/AppContext";
 import { useTranslation } from "../i18n/LocaleContext";
 import BackButton from "../common/global/BackButton";
@@ -21,14 +21,16 @@ export default function TopBar({
   onSignOut,
 }: TopBarProps) {
   const { language, setLanguage, t } = useTranslation();
+  const { width } = useWindowDimensions();
   const isAuthorized = variant === "authorized";
+  const compact = width < 520;
 
   return (
-    <View className="h-[68px] flex-row items-center justify-between border-b border-line px-5 md:px-9">
+    <View className={`h-[60px] flex-row items-center justify-between border-b border-line px-3 sm:h-[68px] sm:px-5 md:px-9 ${compact ? "gap-2" : "gap-4"}`}>
       {isAuthorized ? (
         <View className="flex-row items-center gap-3">
-          {presentation === "app" && <Command size={19} color="#C6F36A" />}
-          <Text className="font-medium text-sm text-muted">{t("workspace")}</Text>
+          {presentation === "app" && <Command size={19} color="#176B5B" />}
+          <Text numberOfLines={1} className="font-medium text-xs text-muted sm:text-sm">{t("workspace")}</Text>
           <ChevronDown size={14} color="#7F8B8A" />
         </View>
       ) : (
@@ -37,12 +39,12 @@ export default function TopBar({
           <View className="h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface">
             <Command size={16} color="#C6F36A" />
           </View>
-          <Text className="font-bold text-sm tracking-[2px] text-ink">NOVA</Text>
+          <Text className="font-bold text-sm tracking-[2px] text-ink">CAMPUS</Text>
         </View>
       )}
 
       <View className="flex-row items-center gap-2 md:gap-3">
-        <PresentationSwitch presentation={presentation} setPresentation={setPresentation} />
+        {!compact && <PresentationSwitch presentation={presentation} setPresentation={setPresentation} />}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={language === "en" ? t("language.hindi") : t("language.english")}
@@ -51,7 +53,7 @@ export default function TopBar({
         >
           <Text className="font-medium text-xs text-ink">{language === "en" ? "हिंदी" : "EN"}</Text>
         </Pressable>
-        {isAuthorized && (
+        {isAuthorized && !compact && (
           <>
             <Pressable accessibilityRole="button" accessibilityLabel={t("navigation.notifications")} className="h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface">
               <Bell size={16} color="#A8B1AD" />

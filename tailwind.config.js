@@ -5,15 +5,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        canvas: "#090B0E",
-        surface: "#111519",
-        raised: "#191F23",
-        line: "#262D30",
-        muted: "#7F8B8A",
-        ink: "#F0F4EF",
-        acid: "#C6F36A",
-        aqua: "#70E0CE",
-        coral: "#FF8D72",
+        canvas: "#F4F7F8",
+        surface: "#FFFFFF",
+        raised: "#EAF0F2",
+        line: "#D9E2E6",
+        muted: "#63717E",
+        ink: "#17252D",
+        acid: "#176B5B",
+        aqua: "#137A8A",
+        coral: "#C84B3C",
       },
       fontFamily: {
         display: ["SpaceGrotesk_600SemiBold"],
