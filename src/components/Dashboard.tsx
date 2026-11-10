@@ -53,10 +53,10 @@ export default function Dashboard() {
     });
   }
 
-  function toggleAttendance(id: string) {
+  function toggleAttendance(id: string, currentStatus: AttendanceState) {
     setAttendanceStates((current) => {
-      const currentStatus = current[id] ?? (id === "a-3" ? "absent" : id === "a-4" ? "late" : "present");
-      return { ...current, [id]: currentStatus === "present" ? "absent" : "present" };
+      const displayedStatus = current[id] ?? currentStatus;
+      return { ...current, [id]: displayedStatus === "present" ? "absent" : "present" };
     });
     showNotice({ type: "success", message: t("campus.attendanceSaved"), position: "center-top" });
   }

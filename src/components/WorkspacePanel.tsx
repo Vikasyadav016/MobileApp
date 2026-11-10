@@ -114,7 +114,7 @@ export default function WorkspacePanel({
   role: UserRole;
   query: string;
   attendanceStates: Record<string, AttendanceState>;
-  onToggleAttendance: (id: string) => void;
+  onToggleAttendance: (id: string, currentStatus: AttendanceState) => void;
   onAction: (action: TranslationKey) => void;
   addedRecords: CampusRecord[];
   onCreateRecord: (module: AddableModule) => void;
@@ -192,8 +192,11 @@ export default function WorkspacePanel({
       </View>
 
       {filteredRecords.length ? filteredRecords.map((record) => {
-        const attendanceState = attendanceStates[record.id];
-        const statusKey = module === "attendance" && attendanceState
+        const initialAttendanceState: AttendanceState = record.status === "campus.absent"
+          ? "absent"
+          : record.status === "campus.late" ? "late" : "present";
+        const attendanceState = attendanceStates[record.id] ?? initialAttendanceState;
+        const statusKey = module === "attendance"
           ? `campus.${attendanceState}` as TranslationKey
           : record.status;
         const actionKey = module === "attendance"
@@ -220,7 +223,7 @@ export default function WorkspacePanel({
               {actionKey && (
                 <Pressable
                   accessibilityRole="button"
-                  onPress={() => module === "attendance" ? onToggleAttendance(record.id) : onAction(actionKey)}
+                  onPress={() => module === "attendance" ? onToggleAttendance(record.id, attendanceState) : onAction(actionKey)}
                   className="flex-row items-center gap-1 py-1"
                 >
                   <Text className="font-medium text-xs text-aqua">{t(actionKey)}</Text>
